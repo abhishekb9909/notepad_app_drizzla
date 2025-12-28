@@ -44,8 +44,7 @@ export default function Dashboard({ session }: DashboardProps) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: newTask,
-                    user_id: session.user.id
+                    title: newTask
                 }),
             })
             if (response.ok) {
@@ -55,6 +54,59 @@ export default function Dashboard({ session }: DashboardProps) {
             }
         } catch (error) {
             console.error('Error adding task:', error)
+        }
+    }
+
+    const createTaskFromAI = async (title: string, content?: string, due_date?: string) => {
+        try {
+            // Build request body - only include defined values
+            const taskData: any = { title }
+            if (content) taskData.content = content
+            if (due_date) taskData.due_date = due_date
+
+            const response = await fetch('http://localhost:8000/tasks/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData),
+            })
+            if (response.ok) {
+                const task = await response.json()
+                setTasks([task, ...tasks])
+            } else {
+                const errorText = await response.text()
+                console.error('Backend error:', errorText)
+                throw new Error(`Backend returned ${response.status}`)
+            }
+        } catch (error) {
+            console.error('Error adding task:', error)
+            throw error
+        }
+    }
+
+    const updateTaskFromAI = async (id: string, updates: any) => {
+        try {
+            const response = await fetch(`http://localhost:8000/tasks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            })
+            if (response.ok) {
+                const updatedTask = await response.json()
+                setTasks(tasks.map(t => t.id === id ? updatedTask : t))
+            }
+        } catch (error) {
+            console.error('Error updating task:', error)
+            throw error
+        }
+    }
+
+    const deleteTaskFromAI = async (id: string) => {
+        try {
+            await fetch(`http://localhost:8000/tasks/${id}`, { method: 'DELETE' })
+            setTasks(tasks.filter(t => t.id !== id))
+        } catch (error) {
+            console.error('Error deleting task:', error)
+            throw error
         }
     }
 
@@ -118,8 +170,8 @@ export default function Dashboard({ session }: DashboardProps) {
                             key={tab.id}
                             onClick={() => setView(tab.id as any)}
                             className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${view === tab.id
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
+                                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800'
                                 }`}
                         >
                             <tab.icon size={18} />
@@ -229,7 +281,12 @@ export default function Dashboard({ session }: DashboardProps) {
                 {view === 'calendar' && <CalendarView tasks={tasks} />}
             </div>
 
-            <AIAssistant tasks={tasks} />
+            <AIAssistant
+                tasks={tasks}
+                onCreateTask={createTaskFromAI}
+                onUpdateTask={updateTaskFromAI}
+                onDeleteTask={deleteTaskFromAI}
+            />
         </div>
     )
 }

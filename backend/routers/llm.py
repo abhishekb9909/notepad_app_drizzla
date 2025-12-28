@@ -9,20 +9,51 @@ client = InferenceClient(token=settings.HF_TOKEN)
 
 @router.post("/ask")
 def ask_llm(request: LLMRequest):
+    """Simple LLM endpoint - just returns AI response, no parsing"""
     try:
-        # Using a good instruct model
-        model = "mistralai/Mistral-7B-Instruct-v0.2" 
+        # Use a more stable model for Inference API
+        model = "meta-llama/Llama-3.2-3B-Instruct"
         
-        system_instruction = "You are a smart assistant for a Task Management/Notepad App. Use the provided Context (User's tasks) to answer their questions. If they ask to organize, summarize, or prioritize, use the task list provided."
-        prompt = f"{system_instruction}\n\nContext:\n{request.context}\n\nUser Question: {request.prompt}" if request.context else request.prompt
+        if not settings.HF_TOKEN:
+            print("WARNING: HF_TOKEN is missing in .env")
+            return {"response": "AI Assistant is not configured. Please add HF_TOKEN to .env"}
+
+        # Simple system instruction
+        system_instruction = """You are a helpful assistant for a task management app.
+When users ask you to create, update, or delete tasks, respond with a JSON object:
+
+For creating tasks:
+{"action": "create_task", "title": "task name", "due_date": "tomorrow"}
+
+For other questions, respond normally in plain text.
+IMPORTANT: If you create a task, ONLY return the JSON object, no other text."""
+        
+        prompt = f"{system_instruction}\n\nContext:\n{request.context}\n\nUser: {request.prompt}"
         
         messages = [{"role": "user", "content": prompt}]
         
-        response = client.chat_completion(
-            model=model,
-            messages=messages,
-            max_tokens=500
-        )
-        return {"response": response.choices[0].message.content}
+        print(f"Calling HF with model: {model}")
+        try:
+            response = client.chat_completion(
+                model=model,
+                messages=messages,
+                max_tokens=500
+            )
+            ai_response = response.choices[0].message.content
+            print(f"AI response: {ai_response}")
+            return {"response": ai_response}
+        except Exception as hf_err:
+            print(f"HF API Error: {hf_err}")
+            # Fallback to a simpler model if Llama fails
+            print("Retrying with Mistral...")
+            response = client.chat_completion(
+                model="mistralai/Mistral-7B-Instruct-v0.3",
+                messages=messages,
+                max_tokens=500
+            )
+            ai_response = response.choices[0].message.content
+            return {"response": ai_response}
+        
     except Exception as e:
+        print(f"General LLM Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"LLM Error: {str(e)}")
