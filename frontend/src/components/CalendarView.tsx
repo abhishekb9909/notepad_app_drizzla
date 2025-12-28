@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay } from 'date-fns'
+import { enUS } from 'date-fns/locale/en-US'
 import { Task } from '../types'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 const locales = {
-    'en-US': require('date-fns/locale/en-US'),
+    'en-US': enUS,
 }
 
 const localizer = dateFnsLocalizer({
