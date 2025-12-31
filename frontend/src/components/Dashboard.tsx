@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { Session } from '@supabase/supabase-js'
-import { Task, TaskCreate } from '../types'
+import { Task } from '../types'
 import { Trash2, CheckCircle, Circle, Calendar, List, LogOut, Plus } from 'lucide-react'
 import CalendarView from './CalendarView'
 import AIAssistant from './AIAssistant'
@@ -13,9 +13,9 @@ interface DashboardProps {
 
 export default function Dashboard({ session }: DashboardProps) {
     const [tasks, setTasks] = useState<Task[]>([])
-    const [loading, setLoading] = useState(true)
     const [newTask, setNewTask] = useState('')
     const [view, setView] = useState<'list' | 'history' | 'calendar'>('list')
+    const [calendarEvents, setCalendarEvents] = useState<any[]>([])
 
     useEffect(() => {
         fetchTasks()
@@ -30,10 +30,26 @@ export default function Dashboard({ session }: DashboardProps) {
             }
         } catch (error) {
             console.error('Error fetching tasks:', error)
-        } finally {
-            setLoading(false)
         }
     }
+
+    const fetchCalendarEvents = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/calendar/events')
+            if (response.ok) {
+                const data = await response.json()
+                setCalendarEvents(data)
+            }
+        } catch (error) {
+            console.error('Error fetching calendar events:', error)
+        }
+    }
+
+    useEffect(() => {
+        if (view === 'calendar') {
+            fetchCalendarEvents()
+        }
+    }, [view])
 
     const addTask = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -278,7 +294,7 @@ export default function Dashboard({ session }: DashboardProps) {
                     </div>
                 )}
 
-                {view === 'calendar' && <CalendarView tasks={tasks} />}
+                {view === 'calendar' && <CalendarView events={calendarEvents} />}
             </div>
 
             <AIAssistant

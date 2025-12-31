@@ -29,3 +29,10 @@ class Task(TaskBase):
 class LLMRequest(BaseModel):
     prompt: str
     context: Optional[str] = None
+
+class CalendarEvent(BaseModel):
+    id: UUID
+    title: str
+    start: datetime
+    end: datetime
+    allDay: bool = False

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import supabase
-from routers import tasks, llm
+from routers import tasks, llm, calendar
 
 app = FastAPI(title="Notepad Backend")
 
@@ -20,6 +20,7 @@ app.add_middleware(
 
 app.include_router(tasks.router)
 app.include_router(llm.router)
+app.include_router(calendar.router)
 
 @app.get("/")
 def read_root():

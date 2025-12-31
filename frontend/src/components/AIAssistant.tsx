@@ -143,8 +143,8 @@ export default function AIAssistant({ tasks, onCreateTask, onUpdateTask, onDelet
                                     className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div className={`max-w-[80%] p-3 rounded-lg ${m.role === 'user'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-slate-800 text-slate-200'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-slate-800 text-slate-200'
                                         }`}>
                                         {m.content}
                                     </div>
